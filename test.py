@@ -25,8 +25,16 @@ st.subheader("مرحباً بك في تطبيق جامعة كارابوك للذ
 
 if configure_genai():
     # إعداد النموذج
+    # محاولة العثور على أي نموذج متاح يعمل
+try:
     model = genai.GenerativeModel('gemini-1.5-flash')
-    
+    # تجربة سريعة للتأكد
+    model.generate_content("test")
+except:
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+    except:
+        st.error("عذراً، لا يوجد نموذج متاح حالياً في حسابك.")
     # صندوق المحادثة
     if "messages" not in st.session_state:
         st.session_state.messages = []
