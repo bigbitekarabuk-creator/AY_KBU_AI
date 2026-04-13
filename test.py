@@ -1,44 +1,19 @@
 import streamlit as st
 import google.generativeai as genai
-import os
 
-# --- إعدادات الصفحة ---
-st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
+# إعدادات الصفحة
+st.set_page_config(page_title="المدرس العربي الذكي")
 
-# --- الاتصال بـ Gemini ---
-def configure_genai():
-    api_key = st.secrets.get("GOOGLE_API_KEY")
-    if not api_key:
-        api_key = os.environ.get("GOOGLE_API_KEY")
-    if api_key:
-        genai.configure(api_key=api_key)
-        return True
-    return False
+# جلب المفتاح
+api_key = st.secrets.get("GOOGLE_API_KEY")
 
-# --- واجهة المستخدم ---
-st.title("🎓 المدرس العربي الذكي")
-st.subheader("مرحباً بك في تطبيق جامعة كارابوك للذكاء الاصطناعي")
-
-if configure_genai():
-    # محرك اختيار النموذج الذكي - يتجاوز خطأ 404
-    if "model" not in st.session_state:
-        try:
-            # محاولة البحث عن أي نموذج متاح يدعم التوليد
-            available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-            if available_models:
-                # اختيار أول نموذج متاح (غالباً سيكون gemini-1.5-flash أو pro)
-                target_model = available_models[0]
-                st.session_state.model = genai.GenerativeModel(target_model)
-            else:
-                st.error("لم يتم العثور على نماذج متاحة في هذا الحساب.")
-        except Exception as e:
-            # إذا فشل الفحص، نجرب المسار اليدوي كخيار أخير
-            try:
-                st.session_state.model = genai.GenerativeModel('models/gemini-1.5-flash')
-            except:
-                st.error(f"عذراً، هناك مشكلة في الاتصال: {str(e)}")
-
-    # نظام المحادثة
+if api_key:
+    genai.configure(api_key=api_key)
+    # اختيار النموذج المباشر والأكثر استقراراً
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    st.title("🎓 المدرس العربي الذكي")
+    
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
@@ -46,22 +21,17 @@ if configure_genai():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("كيف يمكنني مساعدتك اليوم؟"):
+    if prompt := st.chat_input("اسألني أي شيء..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-
+            
         with st.chat_message("assistant"):
             try:
-                response = st.session_state.model.generate_content(prompt)
-                res_text = response.text
-                st.markdown(res_text)
-                st.session_state.messages.append({"role": "assistant", "content": res_text})
+                response = model.generate_content(prompt)
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
             except Exception as e:
-                st.error(f"حدث خطأ أثناء استلام الرد: {str(e)}")
+                st.error(f"خطأ في الرد: {e}")
 else:
-    st.error("⚠️ لم يتم العثور على مفتاح API في Secrets.")
-
-# --- التذييل ---
-st.sidebar.markdown("---")
-st.sidebar.write("تطوير كلية الإلهيات - جامعة كارابوك")
+    st.error("المفتاح غير موجود في Secrets")
