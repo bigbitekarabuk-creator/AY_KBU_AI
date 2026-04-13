@@ -23,7 +23,7 @@ if configure_genai():
     # محاولة العثور على نموذج متاح وتجهيزه
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
-        # اختبار بسيط للتأكد من عمل النموذج
+        # اختبار سريع للنموذج
         model.generate_content("test")
     except:
         model = genai.GenerativeModel('gemini-pro')
@@ -50,5 +50,4 @@ if configure_genai():
             except Exception as e:
                 st.error(f"حدث خطأ: {str(e)}")
 else:
-    st.error("⚠️ لم يتم العثور على مفتاح API في الإعدادات.")
-    
+    st.error("⚠️ لم يتم العثور على مفتاح API في الإعدادات (Secrets).")
