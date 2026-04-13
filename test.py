@@ -3,8 +3,7 @@ import google.generativeai as genai
 import os
 
 # --- 1. إعداد المفتاح الخاص بك ---
-genai.configure(api_key="AIzaSyAlyiazpd6YzcyOSCuBJTPooAmJ1cLOFsc")
-
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 # --- 2. وظيفة اختيار الموديل تلقائياً ---
 @st.cache_resource
 def get_working_model():
