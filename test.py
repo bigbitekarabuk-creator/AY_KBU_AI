@@ -5,7 +5,7 @@ from google import genai
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
 # جلب المفتاح المدفوع
-api_key = st.secrets.get("GOOGLE_API_KEY")
+api_key = st.secrets.get("AIzaSyDtekqqIDwAFj6RWdjXHilMrEU4DbN73qg")
 
 if api_key:
     try:
