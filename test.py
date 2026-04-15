@@ -1,22 +1,20 @@
 import streamlit as st
 import google.generativeai as genai
 
-# إعدادات الواجهة
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
-# جلب المفتاح المدفوع
+# تفعيل المفتاح المدفوع
 api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
         genai.configure(api_key=api_key)
         
-        # التعديل الجوهري: استخدام النسخة المستقرة لتجنب خطأ 404
-        # نستخدم gemini-1.5-pro كخيار أول للحساب المدفوع
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        # كود ذكي لتحديد الموديل المتاح في حسابك المدفوع
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         
         st.title("🎓 المدرس العربي الذكي")
-        st.caption("نسخة جامعة كارابوك - الأداء العالي (Paid Tier)")
+        st.caption("نسخة جامعة كارابوك - الحساب المدفوع المستقر")
 
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -25,22 +23,25 @@ if api_key:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        if prompt := st.chat_input("اسأل مدرسك الآن..."):
+        if prompt := st.chat_input("تحدث مع مدرسك الآن..."):
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
                 
             with st.chat_message("assistant"):
-                # محاولة توليد الرد
-                response = model.generate_content(prompt)
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-                
+                # محاولة طلب الإجابة
+                try:
+                    response = model.generate_content(prompt)
+                    st.markdown(response.text)
+                    st.session_state.messages.append({"role": "assistant", "content": response.text})
+                except Exception as inner_error:
+                    # حل بديل إذا فشل الموديل الأول
+                    model_pro = genai.GenerativeModel('gemini-1.5-pro-latest')
+                    response = model_pro.generate_content(prompt)
+                    st.markdown(response.text)
+                    st.session_state.messages.append({"role": "assistant", "content": response.text})
+                    
     except Exception as e:
-        # إذا استمر الخطأ، سنقوم بتجربة فلاش تلقائياً
-        st.warning("نحاول الاتصال بالمحرك البديل لضمان السرعة...")
-        model_alt = genai.GenerativeModel('gemini-1.5-flash')
-        response = model_alt.generate_content(prompt)
-        st.markdown(response.text)
+        st.error(f"تنبيه من السيرفر: {str(e)}")
 else:
     st.error("المفتاح غير موجود في Secrets!")
