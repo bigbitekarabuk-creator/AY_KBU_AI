@@ -2,13 +2,18 @@ import streamlit as st
 import google.generativeai as genai
 
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
+
+# جلب المفتاح المدفوع من Secrets
 api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-pro') # النسخة الأقوى لاشتراكك
-    st.title("🎓 المدرس العربي الذكي")
+    # استخدام نسخة Pro المدفوعة (الأذكى والأدق)
+    model = genai.GenerativeModel('gemini-1.5-pro')
     
+    st.title("🎓 المدرس العربي الذكي")
+    st.info("نسخة جامعة كارابوك - الأداء العالي (Paid Tier)")
+
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
@@ -28,4 +33,4 @@ if api_key:
             except Exception as e:
                 st.error(f"خطأ: {e}")
 else:
-    st.error("المفتاح غير موجود في Secrets")
+    st.error("المفتاح غير موجود في Secrets!")
