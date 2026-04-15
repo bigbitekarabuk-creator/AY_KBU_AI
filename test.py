@@ -1,47 +1,51 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai
+from google.generativeai.types import RequestOptions
 
-# إعداد الواجهة - جامعة كارابوك
+# إعداد الواجهة
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
-# جلب المفتاح الجديد من الخزنة (Secrets)
+# جلب المفتاح الجديد من Secrets
 api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
-        # الربط مع المحرك الحديث لعام 2026
-        client = genai.Client(api_key=api_key)
+        # إعداد المكتبة
+        genai.configure(api_key=api_key)
+        
+        # إنشاء الموديل
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         st.title("🎓 المدرس العربي الذكي")
-        st.caption("نسخة جامعة كارابوك - الأداء العالي (Paid Tier)")
+        st.caption("نسخة جامعة كارابوك - النظام المستقر (Paid Tier)")
 
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
-        # عرض المحادثة
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # إدخال السؤال
         if prompt := st.chat_input("تحدث مع مدرسك الآن..."):
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
                 
             with st.chat_message("assistant"):
-                # استخدام الموديل المستقر (Flash هو الأسرع للمحادثات)
-                response = client.models.generate_content(
-                    model='gemini-1.5-flash',
-                    contents=prompt
+                # السطر السحري: إجبار الطلب على استخدام v1 المستقرة وتجنب v1beta
+                response = model.generate_content(
+                    prompt,
+                    request_options=RequestOptions(api_version='v1')
                 )
-                if response and response.text:
+                
+                if response.text:
                     st.markdown(response.text)
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
-                else:
-                    st.warning("المفتاح الجديد قيد التفعيل.. جرب إرسال الرسالة مرة أخرى بعد دقيقة.")
 
     except Exception as e:
-        st.error(f"خطأ في الاتصال بالمحرك: {e}")
+        if "404" in str(e):
+            st.error("السيرفر لا يزال يحاول طلب النسخة التجريبية. يرجى عمل Reboot للتطبيق من إعدادات Streamlit.")
+        else:
+            st.error(f"حدث خطأ: {e}")
 else:
-    st.info("💡 بانتظار إضافة المفتاح الجديد في إعدادات Secrets باسم GOOGLE_API_KEY")
+    st.error("تأكد من وضع المفتاح الجديد في Secrets باسم GOOGLE_API_KEY")
