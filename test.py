@@ -1,22 +1,19 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 
-# إعداد واجهة المدرس العربي - جامعة كارابوك
+# إعداد الواجهة
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
-# جلب المفتاح المدفوع من Secrets
-api_key = st.secrets.get("AIzaSyDtekqqIDwAFj6RWdjXHilMrEU4DbN73qg")
+# جلب المفتاح المدفوع
+api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
-        genai.configure(api_key=api_key)
-        
-        # التعديل الأهم: استخدام الموديل بدون تحديد إصدار v1beta يدوي لتركه يختار المستقر
-        # الحسابات المدفوعة الآن تعمل بشكل أفضل مع هذا التعريف المباشر
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # استخدام العميل الجديد لعام 2026
+        client = genai.Client(api_key=api_key)
         
         st.title("🎓 المدرس العربي الذكي")
-        st.caption("جامعة كارابوك - النسخة الاحترافية (Stable)")
+        st.caption("جامعة كارابوك - النسخة الحديثة 2026")
 
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -31,17 +28,15 @@ if api_key:
                 st.markdown(prompt)
                 
             with st.chat_message("assistant"):
-                try:
-                    # طلب الرد
-                    response = model.generate_content(prompt)
-                    if response.text:
-                        st.markdown(response.text)
-                        st.session_state.messages.append({"role": "assistant", "content": response.text})
-                except Exception as inner_e:
-                    st.error(f"خطأ في الاتصال: {str(inner_e)}")
-                    st.info("نصيحة: تأكد من أن مفتاح الـ API يبدأ بـ AIza ومأخوذ من Google AI Studio.")
+                # طلب التوليد باستخدام الطريقة الجديدة
+                response = client.models.generate_content(
+                    model='gemini-1.5-flash',
+                    contents=prompt
+                )
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
 
     except Exception as e:
-        st.error(f"حدث خطأ غير متوقع: {e}")
+        st.error(f"خطأ في المحرك الجديد: {e}")
 else:
     st.error("المفتاح غير موجود في Secrets!")
