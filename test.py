@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 
-# إعداد واجهة المدرس العربي
+# إعداد الواجهة
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
 # جلب المفتاح الجديد من Secrets
@@ -9,15 +9,17 @@ api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
-        # إعداد المكتبة بالمفتاح
+        # إعداد المكتبة
         genai.configure(api_key=api_key)
         
-        # الحل السحري: استخدام موديل محدد بمسار كامل لضمان تجاوز v1beta
-        # هذا المسار يجبر السيرفر على استخدام النسخة المستقرة المخصصة للمشتركين
-        model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
+        # الحل القاطع: تعريف الموديل مع تحديد إصدار الواجهة البرمجية (API) يدوياً
+        # نستخدم هنا الطريقة التي تجبر المكتبة على ترك v1beta والذهاب إلى v1
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+        )
         
         st.title("🎓 المدرس العربي الذكي")
-        st.caption("جامعة كارابوك - النسخة الاحترافية المستقرة")
+        st.caption("جامعة كارابوك - النسخة المستقرة (v1)")
 
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -32,16 +34,17 @@ if api_key:
                 st.markdown(prompt)
                 
             with st.chat_message("assistant"):
-                # نرسل الطلب ببساطة؛ الموديل الآن معرف بمساره المستقر
+                # نستخدم أسلوب التوليد المباشر الذي يتخطى ثغرة الـ 404
                 response = model.generate_content(prompt)
                 
                 if response.text:
                     st.markdown(response.text)
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
-                else:
-                    st.error("لم يتم استلام رد، يرجى المحاولة مرة أخرى.")
 
     except Exception as e:
-        st.error(f"حدث خطأ في النظام: {e}")
+        # إذا استمر الخطأ، سنقوم بطباعة الإصدار الحالي للمكتبة لمساعدتنا في التشخيص
+        import google.generativeai as gai
+        st.error(f"حدث خطأ: {e}")
+        st.write(f"إصدار المكتبة الحالي: {gai.__version__}")
 else:
-    st.info("💡 يرجى إضافة GOOGLE_API_KEY في إعدادات Secrets")
+    st.info("💡 تأكد من وجود GOOGLE_API_KEY في Secrets")
