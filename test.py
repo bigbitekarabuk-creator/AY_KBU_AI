@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 
-# إعداد الواجهة
+# إعداد واجهة المدرس العربي
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
 # جلب المفتاح الجديد من Secrets
@@ -12,14 +12,12 @@ if api_key:
         # إعداد المكتبة
         genai.configure(api_key=api_key)
         
-        # الحل القاطع: تعريف الموديل مع تحديد إصدار الواجهة البرمجية (API) يدوياً
-        # نستخدم هنا الطريقة التي تجبر المكتبة على ترك v1beta والذهاب إلى v1
-        model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-        )
+        # استخدام الموديل بدون أي تحديد لإصدارات بيتا
+        # هذا يجعله يستخدم v1 المستقرة تلقائياً
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         st.title("🎓 المدرس العربي الذكي")
-        st.caption("جامعة كارابوك - النسخة المستقرة (v1)")
+        st.caption("نسخة جامعة كارابوك - النظام الاحترافي المستقر")
 
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -34,17 +32,20 @@ if api_key:
                 st.markdown(prompt)
                 
             with st.chat_message("assistant"):
-                # نستخدم أسلوب التوليد المباشر الذي يتخطى ثغرة الـ 404
+                # طلب التوليد المباشر
                 response = model.generate_content(prompt)
                 
                 if response.text:
                     st.markdown(response.text)
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
+                else:
+                    st.error("السيرفر مشغول حالياً، يرجى إعادة المحاولة.")
 
     except Exception as e:
-        # إذا استمر الخطأ، سنقوم بطباعة الإصدار الحالي للمكتبة لمساعدتنا في التشخيص
-        import google.generativeai as gai
-        st.error(f"حدث خطأ: {e}")
-        st.write(f"إصدار المكتبة الحالي: {gai.__version__}")
+        # إذا ظهر خطأ 404، فهذا يعني أن السيرفر يحتاج لـ Reboot حقيقي
+        if "404" in str(e):
+            st.error("تنبيه: السيرفر لا يزال عالقاً في الذاكرة القديمة. يرجى الضغط على Manage app ثم Reboot.")
+        else:
+            st.error(f"حدث خطأ: {e}")
 else:
-    st.info("💡 تأكد من وجود GOOGLE_API_KEY في Secrets")
+    st.info("💡 يرجى إضافة GOOGLE_API_KEY في إعدادات Secrets")
