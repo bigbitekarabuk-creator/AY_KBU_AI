@@ -1,8 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
-from google.generativeai.types import RequestOptions
 
-# إعداد الواجهة
+# إعداد واجهة المدرس العربي
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
 # جلب المفتاح الجديد من Secrets
@@ -10,14 +9,15 @@ api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
-        # إعداد المكتبة
+        # إعداد المكتبة بالمفتاح
         genai.configure(api_key=api_key)
         
-        # إنشاء الموديل
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # الحل السحري: استخدام موديل محدد بمسار كامل لضمان تجاوز v1beta
+        # هذا المسار يجبر السيرفر على استخدام النسخة المستقرة المخصصة للمشتركين
+        model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
         
         st.title("🎓 المدرس العربي الذكي")
-        st.caption("نسخة جامعة كارابوك - النظام المستقر (Paid Tier)")
+        st.caption("جامعة كارابوك - النسخة الاحترافية المستقرة")
 
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -32,20 +32,16 @@ if api_key:
                 st.markdown(prompt)
                 
             with st.chat_message("assistant"):
-                # السطر السحري: إجبار الطلب على استخدام v1 المستقرة وتجنب v1beta
-                response = model.generate_content(
-                    prompt,
-                    request_options=RequestOptions(api_version='v1')
-                )
+                # نرسل الطلب ببساطة؛ الموديل الآن معرف بمساره المستقر
+                response = model.generate_content(prompt)
                 
                 if response.text:
                     st.markdown(response.text)
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
+                else:
+                    st.error("لم يتم استلام رد، يرجى المحاولة مرة أخرى.")
 
     except Exception as e:
-        if "404" in str(e):
-            st.error("السيرفر لا يزال يحاول طلب النسخة التجريبية. يرجى عمل Reboot للتطبيق من إعدادات Streamlit.")
-        else:
-            st.error(f"حدث خطأ: {e}")
+        st.error(f"حدث خطأ في النظام: {e}")
 else:
-    st.error("تأكد من وضع المفتاح الجديد في Secrets باسم GOOGLE_API_KEY")
+    st.info("💡 يرجى إضافة GOOGLE_API_KEY في إعدادات Secrets")
