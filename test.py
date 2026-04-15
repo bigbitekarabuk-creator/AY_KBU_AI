@@ -1,22 +1,22 @@
+
 import streamlit as st
 import google.generativeai as genai
+from google.generativeai.types import RequestOptions
 
-# إعداد واجهة المدرس العربي - جامعة كارابوك
 st.set_page_config(page_title="المدرس العربي الذكي", page_icon="🎓")
 
-# تفعيل المفتاح المدفوع من Secrets
+# تفعيل المفتاح المدفوع
 api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
         genai.configure(api_key=api_key)
         
-        # استخدام الموديل المستقر (تجنب v1beta)
-        # نستخدم الاسم المباشر للموديل لضمان التوافق مع الحساب المدفوع
+        # إجبار النظام على استخدام النسخة المستقرة v1 لتجنب خطأ 404
         model = genai.GenerativeModel('gemini-1.5-pro')
         
         st.title("🎓 المدرس العربي الذكي")
-        st.caption("نسخة جامعة كارابوك - الأداء العالي (Paid Tier)")
+        st.caption("جامعة كارابوك - النسخة الاحترافية المستقرة")
 
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -31,21 +31,24 @@ if api_key:
                 st.markdown(prompt)
                 
             with st.chat_message("assistant"):
-                # طلب توليد المحتوى مع معالجة الأخطاء
-                response = model.generate_content(prompt)
+                # استخدام "طلب صريح" للنسخة v1
+                response = model.generate_content(
+                    prompt,
+                    request_options=RequestOptions(api_version='v1')
+                )
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
                 
-                if response.text:
-                    st.markdown(response.text)
-                    st.session_state.messages.append({"role": "assistant", "content": response.text})
-                else:
-                    st.error("لم يتمكن الموديل من الرد، يرجى المحاولة مرة أخرى.")
-
     except Exception as e:
-        # حل بديل سريع في حال وجود ضغط على السيرفر
-        st.warning("نحول الاتصال للمحرك السريع...")
-        model_alt = genai.GenerativeModel('gemini-1.5-flash')
-        response = model_alt.generate_content(prompt)
-        st.markdown(response.text)
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
+        # محاولة أخيرة باستخدام فلاش المستقر
+        try:
+            model_flash = genai.GenerativeModel('gemini-1.5-flash')
+            response = model_flash.generate_content(
+                prompt,
+                request_options=RequestOptions(api_version='v1')
+            )
+            st.markdown(response.text)
+        except:
+            st.error("السيرفر يرفض الاتصال بالنسخ التجريبية. يرجى الانتظار دقيقة حتى يتحدث الرابط.")
 else:
-    st.error("يرجى إضافة GOOGLE_API_KEY في إعدادات Secrets")
+    st.error("المفتاح غير موجود في Secrets!")
